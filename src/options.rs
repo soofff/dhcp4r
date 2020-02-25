@@ -7,7 +7,7 @@ pub struct RawDhcpOption {
     pub data: Vec<u8>,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum DhcpOption {
     DhcpMessageType(MessageType),
     ServerIdentifier(Ipv4Addr),
@@ -20,32 +20,35 @@ pub enum DhcpOption {
     SubnetMask(Ipv4Addr),
     Message(String),
     Unrecognized(RawDhcpOption),
+    TftpServerName(String),
+    BootFileName(String),
+    RootPath(String),
 }
 
 impl DhcpOption {
     pub fn to_raw(&self) -> RawDhcpOption {
         match self {
-            Self::DhcpMessageType(mtype) => RawDhcpOption{
+            Self::DhcpMessageType(mtype) => RawDhcpOption {
                 code: DHCP_MESSAGE_TYPE,
                 data: vec![*mtype as u8],
             },
-            Self::ServerIdentifier(addr) => RawDhcpOption{
+            Self::ServerIdentifier(addr) => RawDhcpOption {
                 code: SERVER_IDENTIFIER,
                 data: addr.octets().to_vec(),
             },
-            Self::ParameterRequestList(prl) => RawDhcpOption{
+            Self::ParameterRequestList(prl) => RawDhcpOption {
                 code: PARAMETER_REQUEST_LIST,
                 data: prl.clone(),
             },
-            Self::RequestedIpAddress(addr) => RawDhcpOption{
+            Self::RequestedIpAddress(addr) => RawDhcpOption {
                 code: REQUESTED_IP_ADDRESS,
                 data: addr.octets().to_vec(),
             },
-            Self::HostName(name) => RawDhcpOption{
+            Self::HostName(name) => RawDhcpOption {
                 code: HOST_NAME,
                 data: name.as_bytes().to_vec(),
             },
-            Self::Router(addrs) => RawDhcpOption{
+            Self::Router(addrs) => RawDhcpOption {
                 code: ROUTER,
                 data: {
                     let mut v = vec!();
@@ -53,9 +56,9 @@ impl DhcpOption {
                         v.extend(a.octets().iter());
                     }
                     v
-                }
+                },
             },
-            Self::DomainNameServer(addrs) => RawDhcpOption{
+            Self::DomainNameServer(addrs) => RawDhcpOption {
                 code: DOMAIN_NAME_SERVER,
                 data: {
                     let mut v = vec!();
@@ -63,9 +66,9 @@ impl DhcpOption {
                         v.extend(a.octets().iter());
                     }
                     v
-                }
+                },
             },
-            Self::IpAddressLeaseTime(secs) => RawDhcpOption{
+            Self::IpAddressLeaseTime(secs) => RawDhcpOption {
                 code: IP_ADDRESS_LEASE_TIME,
                 data: [
                     (secs & 0xFF) as u8,
@@ -74,13 +77,25 @@ impl DhcpOption {
                     ((secs >> 24) & 0xFFu32) as u8,
                 ].to_vec(),
             },
-            Self::SubnetMask(mask) => RawDhcpOption{
+            Self::SubnetMask(mask) => RawDhcpOption {
                 code: SUBNET_MASK,
                 data: mask.octets().to_vec(),
             },
-            Self::Message(msg) => RawDhcpOption{
+            Self::Message(msg) => RawDhcpOption {
                 code: MESSAGE,
                 data: msg.as_bytes().to_vec(),
+            },
+            Self::TftpServerName(hostname) => RawDhcpOption {
+                code: TFTP_SERVER_NAME,
+                data: hostname.as_bytes().to_vec(),
+            },
+            Self::BootFileName(filename) => RawDhcpOption {
+                code: BOOTFILE_NAME,
+                data: filename.as_bytes().to_vec(),
+            },
+            Self::RootPath(filename) => RawDhcpOption {
+                code: ROOT_PATH,
+                data: filename.as_bytes().to_vec(),
             },
             Self::Unrecognized(raw) => raw.clone(),
         }
@@ -98,6 +113,9 @@ impl DhcpOption {
             Self::IpAddressLeaseTime(_) => IP_ADDRESS_LEASE_TIME,
             Self::SubnetMask(_) => SUBNET_MASK,
             Self::Message(_) => MESSAGE,
+            Self::TftpServerName(_) => TFTP_SERVER_NAME,
+            Self::BootFileName(_) => BOOTFILE_NAME,
+            Self::RootPath(_) => ROOT_PATH,
             Self::Unrecognized(x) => x.code,
         }
     }
