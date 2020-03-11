@@ -23,6 +23,7 @@ pub enum DhcpOption {
     TftpServerName(String),
     BootFileName(String),
     RootPath(String),
+    RelayAgentInformation(Vec<u8>),
 }
 
 impl DhcpOption {
@@ -97,6 +98,10 @@ impl DhcpOption {
                 code: ROOT_PATH,
                 data: filename.as_bytes().to_vec(),
             },
+            Self::RelayAgentInformation(data) => RawDhcpOption {
+                code: RELAY_AGENT_INFORMATION,
+                data: data.to_vec(),
+            },
             Self::Unrecognized(raw) => raw.clone(),
         }
     }
@@ -116,6 +121,7 @@ impl DhcpOption {
             Self::TftpServerName(_) => TFTP_SERVER_NAME,
             Self::BootFileName(_) => BOOTFILE_NAME,
             Self::RootPath(_) => ROOT_PATH,
+            Self::RelayAgentInformation(_) => RELAY_AGENT_INFORMATION,
             Self::Unrecognized(x) => x.code,
         }
     }
